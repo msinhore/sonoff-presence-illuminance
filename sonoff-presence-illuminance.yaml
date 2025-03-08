@@ -78,9 +78,10 @@ condition:
 
   - condition: template
     value_template: >
-      {% set illuminance = states(!input.illuminance_sensor) %}
+      {% set illuminance = states(input.illuminance_sensor) %}
+      {% set threshold = input.illuminance_threshold | int %}
       {% set lux_value = 100 if illuminance == 'bright' else 10 if illuminance == 'dim' else 0 %}
-      {{ lux_value < !input.illuminance_threshold }}
+      {{ lux_value < threshold }}
 
 action:
   - delay:
