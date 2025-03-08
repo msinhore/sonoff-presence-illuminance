@@ -1,0 +1,87 @@
+blueprint:
+  name: Acender Luz Branca com Presença e Baixa Iluminação
+  description: >
+    Acende uma luz branca quando há detecção de presença, se a iluminação estiver baixa 
+    e dentro do período de tempo configurado.
+  domain: automation
+  input:
+    presence_sensor:
+      name: Sensor de Presença
+      description: Selecione o sensor de presença.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: occupancy
+
+    illuminance_sensor:
+      name: Sensor de Iluminação
+      description: Selecione o sensor de iluminação ambiente.
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+
+    light_entity:
+      name: Luz Branca
+      description: Selecione a luz que será ligada.
+      selector:
+        entity:
+          domain: light
+
+    illuminance_threshold:
+      name: Limite de Iluminação (lux)
+      description: Defina o nível de iluminação abaixo do qual a luz será acesa.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "lux"
+          mode: slider
+
+    delay_seconds:
+      name: Atraso antes de ligar (segundos)
+      description: Tempo de espera antes de verificar a iluminação e ligar a luz.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 5
+          unit_of_measurement: "s"
+          mode: slider
+
+    start_time:
+      name: Início do Horário de Funcionamento
+      description: Escolha a hora em que a automação pode acionar a luz.
+      default: "17:00:00"
+      selector:
+        time: {}
+
+    end_time:
+      name: Fim do Horário de Funcionamento
+      description: Escolha a hora em que a automação para de funcionar.
+      default: "07:00:00"
+      selector:
+        time: {}
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input presence_sensor
+    from: "off"
+    to: "on"
+
+condition:
+  - condition: time
+    after: !input start_time
+    before: !input end_time
+  - condition: template
+    value_template: >
+      {{ states[!input.illuminance_sensor] | float(0) < !input.illuminance_threshold }}
+
+action:
+  - delay: "{{ !input.delay_seconds }}"
+  - service: light.turn_on
+    target:
+      entity_id: !input.light_entity
