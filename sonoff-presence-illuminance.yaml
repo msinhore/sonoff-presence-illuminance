@@ -1,36 +1,36 @@
 blueprint:
-  name: Acender Luz Branca com Presença e Baixa Iluminação
+  name: Turn On White Light with Motion and Low Illuminance
   description: >
-    Acende uma luz branca quando há detecção de presença, se a iluminação estiver baixa 
-    e dentro do período de tempo configurado.
+    Turns on a white light when motion is detected, the ambient light is below a certain threshold, 
+    and within a specific time range.
   domain: automation
   input:
     presence_sensor:
-      name: Sensor de Presença
-      description: Selecione o sensor de presença.
+      name: Motion Sensor
+      description: Select the motion sensor.
       selector:
         entity:
           domain: binary_sensor
           device_class: occupancy
 
     illuminance_sensor:
-      name: Sensor de Iluminação
-      description: Selecione o sensor de iluminação ambiente.
+      name: Illuminance Sensor
+      description: Select the ambient illuminance sensor.
       selector:
         entity:
           domain: sensor
           device_class: illuminance
 
     light_entity:
-      name: Luz Branca
-      description: Selecione a luz que será ligada.
+      name: White Light
+      description: Select the light to be turned on.
       selector:
         entity:
           domain: light
 
     illuminance_threshold:
-      name: Limite de Iluminação (lux)
-      description: Defina o nível de iluminação abaixo do qual a luz será acesa.
+      name: Illuminance Threshold (lux)
+      description: Set the illuminance level below which the light will turn on.
       default: 10
       selector:
         number:
@@ -40,8 +40,8 @@ blueprint:
           mode: slider
 
     delay_seconds:
-      name: Atraso antes de ligar (segundos)
-      description: Tempo de espera antes de verificar a iluminação e ligar a luz.
+      name: Delay Before Turning On (seconds)
+      description: Wait time before checking illuminance and turning on the light.
       default: 1
       selector:
         number:
@@ -51,15 +51,15 @@ blueprint:
           mode: slider
 
     start_time:
-      name: Início do Horário de Funcionamento
-      description: Escolha a hora em que a automação pode acionar a luz.
+      name: Start Time
+      description: Choose the time when the automation is active.
       default: "17:00:00"
       selector:
         time: {}
 
     end_time:
-      name: Fim do Horário de Funcionamento
-      description: Escolha a hora em que a automação para de funcionar.
+      name: End Time
+      description: Choose the time when the automation stops running.
       default: "07:00:00"
       selector:
         time: {}
@@ -81,7 +81,8 @@ condition:
       {{ states[!input.illuminance_sensor] | float(0) < !input.illuminance_threshold }}
 
 action:
-  - delay: "{{ !input.delay_seconds }}"
+  - delay:
+      seconds: !input delay_seconds
   - service: light.turn_on
-    target:
-      entity_id: !input light_entity
+    data:
+      entity_id: "{{ iif(is_state(!input.light_entity, 'off'), !input.light_entity, '') }}"
