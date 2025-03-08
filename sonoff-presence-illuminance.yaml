@@ -1,8 +1,8 @@
 blueprint:
   name: Turn On White Light with Motion and Low Illuminance
   description: >
-    Turns on a white light when motion is detected, the ambient light is low (dim),
-    and within a specific time range.
+    Turns on a white light when motion is detected and the illuminance sensor reports "dim" 
+    during a specific time range.
   domain: automation
   input:
     presence_sensor:
@@ -27,19 +27,9 @@ blueprint:
         entity:
           domain: light
 
-    illuminance_threshold:
-      name: Illuminance Threshold
-      description: If the sensor state is below this threshold, the light will turn on.
-      default: "dim"
-      selector:
-        select:
-          options:
-            - "dim"
-            - "bright"
-
     delay_seconds:
       name: Delay Before Turning On (seconds)
-      description: Wait time before checking illuminance and turning on the light.
+      description: Wait time before turning on the light.
       default: 1
       selector:
         number:
@@ -70,18 +60,18 @@ trigger:
     from: "off"
     to: "on"
 
+  - platform: state
+    entity_id: !input illuminance_sensor
+    to: "dim"
+
 condition:
   - condition: time
     after: !input start_time
     before: !input end_time
 
-  - condition: template
-    value_template: >
-      {% set illuminance = states[!input.illuminance_sensor] %}
-      {{ illuminance == !input.illuminance_threshold }}
-
 action:
   - delay:
       seconds: !input delay_seconds
   - service: light.turn_on
-    target: !input light_entity
+    target:
+      entity_id: !input light_entity
